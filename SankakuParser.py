@@ -33,7 +33,7 @@ class SankakuParser:
                 "prefs", {"profile.managed_default_content_settings.images": 2}
             )
 
-        self.driver = webdriver.Chrome(chrome_options=chrome_options)
+        self.driver = webdriver.Chrome(options=chrome_options)
 
 
 
@@ -91,9 +91,15 @@ class SankakuParser:
         submit_button.click()
 
         try:
+            present = EC.presence_of_element_located((By.XPATH, "//div[normalize-space()='Not now']"))
+            WebDriverWait(self.driver, delay).until(present)
+
+            not_now = self.driver.find_element(By.XPATH, "//div[normalize-space()='Not now']")
+            not_now.click()
+
             present = EC.presence_of_element_located((By.CSS_SELECTOR, "input[id='autocomplete']"))
             WebDriverWait(self.driver, delay).until(present)
-        except:
+        except Exception as e:
             raise Exception('Wrong username or password')
         
         time.sleep(1)
