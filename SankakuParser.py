@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import urllib.parse
 import time
 import os
 import requests
@@ -106,7 +107,23 @@ class SankakuParser:
         self.last_next_id = json['meta']['next']
         
         return self.search_cleaner(json)
-        
+    
+
+    @staticmethod
+    def auto_tag(text):
+        try:
+            words =  text.strip().split()  
+            last_word = words[0] if words else ""
+            if last_word == "":
+                return []
+
+            encoded_tag = urllib.parse.quote(last_word)
+            json_data = requests.get(f'https://sankakuapi.com/tags/autosuggestCreating?tag={encoded_tag}&show_meta=0&target=post').json()
+
+            return [item["tagName"] for item in json_data if "tagName" in item]
+        except:
+            return []
+
 
     def next(self):
         if self.last_next_id is None:

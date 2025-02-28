@@ -42,8 +42,8 @@ class Donwloader:
                 os.makedirs(save_dir, exist_ok=True) 
 
                 self.sankaku.download(media, save_dir, save_tags=self.save_tags)
-
-                Logger.success(f"<ansiblue>{self.save_counter}</ansiblue> | <ansiblue>{media['id']}</ansiblue> | {media['file']}")
+                
+                Logger.success(f"{Logger.s(self.save_counter, 'pointer')} | {Logger.s(media['id'], 'pointer')} | {Logger.s(media['file'], 'skipped')}")
 
                 self.save_counter += 1
                 if self.save_counter > self.max_donwload and self.max_donwload > 0:
@@ -61,7 +61,7 @@ class Donwloader:
 
     def download(self, search):
         if not self.is_authorized and self.user and self.password:      
-            Logger.warning("Authorization... ")
+            Logger.info("Authorization... ")
             try:
                 self.sankaku.auth(self.user, self.password)
                 Logger.success("Authorization successful")

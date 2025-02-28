@@ -1,14 +1,16 @@
 from Donwloader import Donwloader
+from SankakuParser import SankakuParser
 from Logger import Logger
 from InquirerPy import prompt
 from InquirerPy.validator import EmptyInputValidator
+from prompt_toolkit.completion import Completer, Completion, ThreadedCompleter
 import json
 import os
 import re
 
 
-def get_config(config_path):
-    f = open(config_path)
+def get_config():
+    f = open('config.user.json' if os.path.exists('config.user.json') else 'config.json')
     config = json.load(f)
     f.close()
     return config
@@ -21,33 +23,39 @@ def get_simple_name(name):
     return name 
 
 
-config = get_config('config.json')
+class SankakuTagCompleter(Completer):
+    def get_completions(self, document, complete_event):
+        before = document.get_word_before_cursor()
+        for tag in SankakuParser.auto_tag(before):
+            yield Completion(tag, -len(before))
+
 
 questions = [
     {
         'type': 'input',
         'name': 'search_query',
         'message': 'Search query:',
+        "completer": ThreadedCompleter(SankakuTagCompleter()),
         'default': 'order:popular',
         'validate': EmptyInputValidator(message="Search query cannot be empty")
     },
     {
         'type': 'input',
         'name': 'save_dir',
-        'message': lambda answers: f'Enter name of the database directory to save (default "{get_simple_name(answers["search_query"])}"):',
+        'message': 'Enter name of the database directory to save:',
         'default': lambda answers: get_simple_name(answers['search_query']),
         'validate': EmptyInputValidator(message="Save directory cannot be empty")
     },
     {
         'type': 'confirm',
         'name': 'save_tags',
-        'message': 'Save .txt tag files? (default "yes")',
+        'message': 'Save .txt tag files? (default "yes"):',
         'default': True
     },
     {
         'type': 'confirm',
         'name': 'formats_grouping',
-        'message': 'Create a separate directory for each data type (jpeg/pgn/mp4..)? (default "no")',
+        'message': 'Create a separate directory for each data type (jpeg/pgn/mp4..)? (default "no"):',
         'default': False
     },
     {
@@ -66,6 +74,8 @@ save_dir = answers['save_dir'].strip()
 save_tags = answers['save_tags']
 formats_grouping = answers['formats_grouping']
 max_donwload = int(answers['max_donwload']) if answers['max_donwload'] != 'all' else -1
+
+config = get_config()
 
 donwloader = Donwloader(
     save_dir=os.path.join(config['save']['save_dir'], save_dir), 

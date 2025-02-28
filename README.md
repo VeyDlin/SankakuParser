@@ -1,40 +1,36 @@
 # Info
 
-The script for parsing sankakucomplex, can use your account, it is useful if you want to download your bookmarks, upload media unavailable without authorization or a premium account, or bypass the limit of 50 pages (not available if you do not have a subscription to sankaku)
+This script allows you to parse and download content from SankakuComplex. It supports account authentication, enabling you to:
+- Download your bookmarks
+- Access media unavailable without authentication or a premium account
+- Bypass the 50-page limit (requires a subscription)
 
-Features:
+## Features
 
-1. You can download all content, including videos
+- **Full Content Download** – Supports all media types, including videos.
+- **Simple Search Queries** – Use the same search syntax as SankakuComplex.
+- **Bookmark Downloading** – Retrieve your favorites with `fav:YOUR_USERNAME`.
+- **No Login Required** – Skip authentication by leaving login credentials blank in `config.json`.
+  - No API keys needed – just a username and password!
+- **Tag Saving** – Optionally stores all tags, useful for training neural networks.
+- **Content Sorting** – Automatically organizes files into separate folders by format.
+- **Customizable Download Limits** – Specify the number of media files to download.
 
-2. Write a search query in the same way as you do in sankaku!
+## Preview
 
-3. Upload your bookmarks simply by typing fav:YOUR_USERNAME
-
-4. Don't have an account or don't want to log in? Just do not fill in your login details in the config and immediately run the script
-
-   4.1 No complicated API keys! Just login and password!
-
-5. Optionally saves all tags, this is useful if you are going to train a neural network
-
-6. You can sort the content by format, the script will create a separate folder for each file type
-
-7. You can select the number of media you want to download
+<img src=".github/console.tag.png" style="float: left;" />
 
 <img src=".github/console.png" style="float: left;" />
 
 <img src=".github/dataset.png" style="float: left;" />
 
-# Using
+# Usage
 
-You need Python 3 version
+### Requirements
+- Python 3
 
-1. Fill in `config.json` with `username` and `password` to use your account when parsing 
-
-   Skip this step if you don't want to log in
-
-2. Just run `start.bat` if you are using Windows or `start.sh ` for Linux, the first installation may take some time
-
-3. Follow the prompts in the console
-
-4. Done!
-
+### Setup & Execution
+1. Edit `config.json` to add your `username` and `password` (optional).
+2. Run `start.bat` (Windows) or `start.sh` (Linux). The first setup may take some time.
+3. Follow the console prompts.
+4. Enjoy your downloads!
