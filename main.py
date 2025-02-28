@@ -1,5 +1,7 @@
 from Donwloader import Donwloader
-from BColors import BColors
+from Logger import Logger
+from InquirerPy import prompt
+from InquirerPy.validator import EmptyInputValidator
 import json
 import os
 import re
@@ -19,57 +21,51 @@ def get_simple_name(name):
     return name 
 
 
-def print_enter(data):
-    if data:
-        print(f'{BColors.OKGREEN}> {data}{BColors.ENDC}')
-
-
-
 config = get_config('config.json')
 
+questions = [
+    {
+        'type': 'input',
+        'name': 'search_query',
+        'message': 'Search query:',
+        'default': 'order:popular',
+        'validate': EmptyInputValidator(message="Search query cannot be empty")
+    },
+    {
+        'type': 'input',
+        'name': 'save_dir',
+        'message': lambda answers: f'Enter name of the database directory to save (default "{get_simple_name(answers["search_query"])}"):',
+        'default': lambda answers: get_simple_name(answers['search_query']),
+        'validate': EmptyInputValidator(message="Save directory cannot be empty")
+    },
+    {
+        'type': 'confirm',
+        'name': 'save_tags',
+        'message': 'Save .txt tag files? (default "yes")',
+        'default': True
+    },
+    {
+        'type': 'confirm',
+        'name': 'formats_grouping',
+        'message': 'Create a separate directory for each data type (jpeg/pgn/mp4..)? (default "no")',
+        'default': False
+    },
+    {
+        'type': 'input',
+        'name': 'max_donwload',
+        'message': 'How many files download?:',
+        'default': 'all',
+        'validate': lambda result: result.isdigit() and int(result) > 0 or result == 'all' or 'Must be "all" or a positive number'
+    }
+]
 
+answers = prompt(questions)
 
-print('Search query (default "order:popular"): ', end='')
-search_query = input()
-if not search_query:
-    search_query = 'order:popular'
-print_enter(search_query)
-
-
-
-default_save_dir = get_simple_name(search_query)
-print(f'Enter name of the database directory to save (default "{default_save_dir}"): ', end='')
-save_dir = input()
-if not save_dir:
-    save_dir = default_save_dir
-print_enter(save_dir)
-
-
-
-print('Save .txt tag files? (default "yes") [y/n]: ', end='')
-save_tags = input() != 'n'
-print_enter('yes' if save_tags else 'no')
-
-
-
-print('Create a separate directory for each data type (jpeg/pgn/mp4..)? (default "no") [y/n]: ', end='')
-formats_grouping = input() == 'y'
-print_enter('yes' if formats_grouping else 'no')
-
-
-
-print('How many files download? (Press "Enter" or write -1 to download all): ', end='')
-max_donwload = input()
-if not max_donwload:
-    max_donwload = -1
-
-try:
-    max_donwload = int(max_donwload)
-except:
-    max_donwload = -1
-print_enter('all' if max_donwload <= 0 else max_donwload)
-
-
+search_query = answers['search_query'].strip()
+save_dir = answers['save_dir'].strip()
+save_tags = answers['save_tags']
+formats_grouping = answers['formats_grouping']
+max_donwload = int(answers['max_donwload']) if answers['max_donwload'] != 'all' else -1
 
 donwloader = Donwloader(
     save_dir=os.path.join(config['save']['save_dir'], save_dir), 
@@ -81,6 +77,8 @@ donwloader = Donwloader(
 if config['sankaku']['username'] and config['sankaku']['password']:
     donwloader.set_user(config['sankaku']['username'], config['sankaku']['password'])
 else:
-    print_enter('download without authorization')
+    Logger.info('Download without authorization')
+
+Logger.info('')
 
 donwloader.download(search_query)

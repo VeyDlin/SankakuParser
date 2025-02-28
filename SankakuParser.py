@@ -1,10 +1,8 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
-import json
 import os
 import requests
 import shutil
@@ -15,7 +13,6 @@ class SankakuParser:
     search_params = 'lang=en&hide_posts_in_books=in-larger-tags&limit=40'
     last_next_id = ""
     last_search_tags = ""
-
 
 
     def __init__(self, debug_window = False):
@@ -36,10 +33,9 @@ class SankakuParser:
         self.driver = webdriver.Chrome(options=chrome_options)
 
 
-
     def __del__(self):
-        self.driver.quit()
-
+        if self.driver:
+            self.driver.quit()
 
 
     def get_requests_session(self):
@@ -61,7 +57,6 @@ class SankakuParser:
         return session
 
 
-
     def get_json(self, url):
         session = self.get_requests_session()
         json_data = session.get(url).json()
@@ -70,7 +65,6 @@ class SankakuParser:
             raise Exception(json_data['code'])
 
         return json_data
-
 
 
     def auth(self, user, password, delay = 30):
@@ -105,7 +99,6 @@ class SankakuParser:
         time.sleep(1)
 
 
-
     def search(self, tags):
         self.last_search_tags = tags.replace(' ', '+')
     
@@ -114,7 +107,6 @@ class SankakuParser:
         
         return self.search_cleaner(json)
         
-
 
     def next(self):
         if self.last_next_id is None:
@@ -125,7 +117,6 @@ class SankakuParser:
 
         return self.search_cleaner(json)
     
-
 
     def download(self, json, save_dir, name = None, save_tags = False):
         if name is None:
@@ -149,7 +140,6 @@ class SankakuParser:
             f.close()
 
 
-
     def search_cleaner(self, json):
         clean_data = []
 
@@ -171,7 +161,6 @@ class SankakuParser:
             })
 
         return clean_data
-
 
 
     def tags_cleaner(self, json):

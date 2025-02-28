@@ -1,8 +1,7 @@
 from SankakuParser import SankakuParser
-from BColors import BColors
+from Logger import Logger
 import time
 import os
-
 
 
 class Donwloader:
@@ -19,7 +18,6 @@ class Donwloader:
     is_authorized = False
 
 
-
     def __init__(self, save_dir = 'media', save_tags = True, formats_grouping = True, max_donwload = -1):
         self.sankaku = SankakuParser()
         self.save_dir = save_dir
@@ -28,11 +26,9 @@ class Donwloader:
         self.max_donwload = max_donwload
 
 
-
     def set_user(self, user, password):
         self.user = user
         self.password = password
-
 
 
     def download_page(self, data):
@@ -47,54 +43,50 @@ class Donwloader:
 
                 self.sankaku.download(media, save_dir, save_tags=self.save_tags)
 
-                print(f'{BColors.OKGREEN} [OK] {BColors.ENDC} {BColors.OKBLUE} {self.save_counter} {BColors.ENDC} | {BColors.OKBLUE} {media["id"]} {BColors.ENDC} | {media["file"]}')
+                Logger.success(f"<ansiblue>{self.save_counter}</ansiblue> | <ansiblue>{media['id']}</ansiblue> | {media['file']}")
 
                 self.save_counter += 1
                 if self.save_counter > self.max_donwload and self.max_donwload > 0:
                     return False
 
             except Exception as err:
-                print(f'{BColors.FAIL} [ERROR] {err=}, {type(err)=} {BColors.ENDC}')
+                Logger.error("Error while downloading file", err)
         
         self.page_counter += 1
-        print(f'{BColors.OKGREEN} [------------------------ PAGE {self.page_counter} END ------------------------] {BColors.ENDC}')
-        print()
+        Logger.page_separator(self.page_counter)
         time.sleep(5)
 
         return True
 
 
-
     def download(self, search):
         if not self.is_authorized and self.user and self.password:      
-            print(f'{BColors.WARNING} Authorization... {BColors.ENDC}', end='')
+            Logger.warning("Authorization... ")
             try:
                 self.sankaku.auth(self.user, self.password)
-                print(f'{BColors.OKGREEN} [OK] {BColors.ENDC}')
-
+                Logger.success("Authorization successful")
                 self.is_authorized = True
 
             except Exception as err:
-                print(f'{BColors.FAIL} [ERROR] {err=}, {type(err)=} {BColors.ENDC}')
+                Logger.error("Authorization error", err)
                 return
 
             print()
 
         self.save_counter = 1
         self.page_counter = 1
-
         data = None
         try:
-            print(f'{BColors.OKGREEN} [------------------------ LOAD {self.page_counter} PAGE ------------------------] {BColors.ENDC}')
+            Logger.page_header(self.page_counter)
             data = self.sankaku.search(search)
         except Exception as err:
-            print(f'{BColors.FAIL} [ERROR] {err=}, {type(err)=} {BColors.ENDC}')
+            Logger.error("Search error", err)
 
 
         if self.download_page(data):
             while True:
                 try:
-                    print(f'{BColors.OKGREEN} [------------------------ LOAD {self.page_counter} PAGE ------------------------] {BColors.ENDC}')
+                    Logger.page_header(self.page_counter)
                     data = self.sankaku.next()
                     if not data:
                         break
@@ -102,7 +94,6 @@ class Donwloader:
                     if not self.download_page(data):
                         break
                 except Exception as err:
-                    print(f'{BColors.FAIL} [ERROR] {err=}, {type(err)=} {BColors.ENDC}')
+                    Logger.error("Error loading next page", err)
             
-        print(f'{BColors.OKGREEN} [DONE] {BColors.ENDC}')
-
+        Logger.success("DONE")

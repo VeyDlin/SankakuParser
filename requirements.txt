@@ -1,2 +1,4 @@
 selenium
 requests
+InquirerPy
+prompt_toolkit
