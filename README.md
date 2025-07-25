@@ -1,36 +1,41 @@
 # Info
-
-This script allows you to parse and download content from SankakuComplex. It supports account authentication, enabling you to:
+This script allows you to parse and download content from SankakuComplex. It now supports both **chan.sankakucomplex.com** and **idol.sankakucomplex.com**. It supports account authentication, enabling you to:
 - Download your bookmarks
 - Access media unavailable without authentication or a premium account
 - Bypass the 50-page limit (requires a subscription)
 
-## Features
+## ⚠️ Important Update Notice
+**If you used the old version, you need to update:**
+1. Delete all files from your old installation
+2. Download the new version
+3. Fill in your config.json again
 
-- **Full Content Download** – Supports all media types, including videos.
-- **Simple Search Queries** – Use the same search syntax as SankakuComplex.
-- **Bookmark Downloading** – Retrieve your favorites with `fav:YOUR_USERNAME`.
-- **No Login Required** – Skip authentication by leaving login credentials blank in `config.json`.
+**How to check if you need to update:** If you only had chan support before, you need this update.
+
+## Features
+- **Dual Site Support** – Works with both Chan and Idol sites
+- **Full Content Download** – Supports all media types, including videos
+- **Simple Search Queries** – Use the same search syntax as SankakuComplex
+- **Bookmark Downloading** – Retrieve your favorites with `fav:YOUR_USERNAME`
+- **No Login Required** – Skip authentication by leaving login credentials blank in `config.json`
   - No API keys needed – just a username and password!
-- **Tag Saving** – Optionally stores all tags, useful for training neural networks.
-- **Content Sorting** – Automatically organizes files into separate folders by format.
-- **Customizable Download Limits** – Specify the number of media files to download.
+- **Tag Saving** – Optionally stores all tags, useful for training neural networks
+- **Content Sorting** – Automatically organizes files into separate folders by format
+- **Customizable Download Limits** – Specify the number of media files to download
 
 ## Preview
-
 <img src=".github/console.tag.png" style="float: left;" />
-
 <img src=".github/console.png" style="float: left;" />
-
 <img src=".github/dataset.png" style="float: left;" />
 
 # Usage
 
-### Requirements
+## Requirements
 - Python 3
 
-### Setup & Execution
-1. Edit `config.json` to add your `username` and `password` (optional).
-2. Run `start.bat` (Windows) or `start.sh` (Linux). The first setup may take some time.
-3. Follow the console prompts.
-4. Enjoy your downloads!
+## Setup & Execution
+1. Edit `config.json` to add your username and password for Chan, Idol, or both (optional)
+2. Run `start.bat` (Windows) or `start.sh` (Linux). The first setup may take some time
+3. Choose which site to download from when asked
+4. Follow the console prompts
+5. Enjoy your downloads!

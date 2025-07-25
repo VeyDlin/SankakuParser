@@ -1,7 +1,13 @@
 {
     "sankaku": {
-        "username": "",
-        "password": ""
+        "chan": {
+            "username": "",
+            "password": ""
+        },
+        "idol": {
+            "username": "",
+            "password": ""
+        }
     },
     "save": {
         "save_dir": "data"

@@ -28,7 +28,7 @@ class Logger:
 
     @staticmethod
     def info(message):
-        print_formatted_text(HTML(message))
+        print_formatted_text(HTML(f"[INFO] {message}"))
 
     @staticmethod
     def page_separator(page_num):
