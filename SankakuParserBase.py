@@ -11,8 +11,13 @@ class SankakuParserBase(ABC):
 
 
     def __del__(self):
+        self.close()
+
+
+    def close(self):
         if self._driver:
             self._driver.quit()
+            self._driver = None
 
 
     def init_driver(self, use_profile=True, debug_window=False):

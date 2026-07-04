@@ -1,13 +1,10 @@
-from SankakuParserBase import SankakuParserBase
 from urllib.parse import quote_plus
+from SankakuParserBase import SankakuParserBase
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 import requests
-import json
-import re
-from bs4 import BeautifulSoup
 
 
 class IdolSankakuParser(SankakuParserBase):
@@ -19,22 +16,17 @@ class IdolSankakuParser(SankakuParserBase):
 
 
     def check_auth(self, user=None, delay=30):
-        driver = super()._get_driver()
-        driver.get("https://idol.sankakucomplex.com/home")
-        present = EC.presence_of_element_located((By.CSS_SELECTOR, f"#user-index"))
-        WebDriverWait(driver, delay).until(present)
-
-        user_img = driver.find_elements(By.CSS_SELECTOR, f"#user-index .user-home-heading img")
-        if not user_img:
-            return False
-        
-        if user:
-            title = user_img[0].get_attribute('title')
-            if title != user:
+        super()._get_driver().get("https://idolcomplex.com")
+        try:
+            time.sleep(1)
+            me = self._get_json('https://i.sankakuapi.com/users/me?lang=en')
+            if user and (me or {}).get('user', {}).get('name') != user:
                 self._clear_all_site_data()
                 return False
-            
-        return True
+        
+            return True
+        except Exception:
+            return False
 
 
     def auth(self, user, password, delay=30):
@@ -42,23 +34,23 @@ class IdolSankakuParser(SankakuParserBase):
         try:
             driver.get("https://idol.sankakucomplex.com/users/login")
     
-            present = EC.presence_of_element_located((By.CSS_SELECTOR, "form input[name='user[name]']"))
+            present = EC.presence_of_element_located((By.CSS_SELECTOR, "form input[name='email']"))
             WebDriverWait(driver, delay).until(present)
 
             time.sleep(3)
 
-            email_input = driver.find_element(By.CSS_SELECTOR, "form input[name='user[name]']")
-            password_input = driver.find_element(By.CSS_SELECTOR, "form input[name='user[password]']")
-            submit_button = driver.find_element(By.CSS_SELECTOR, "form input[type='submit']")
+            email_input = driver.find_element(By.CSS_SELECTOR, "form input[name='email']")
+            password_input = driver.find_element(By.CSS_SELECTOR, "form input[name='password']")
+            submit_button = driver.find_element(By.CSS_SELECTOR, "form button[type='submit']")
 
             email_input.send_keys(user)
             password_input.send_keys(password)
 
             submit_button.click()
 
-            present = EC.presence_of_element_located((By.CSS_SELECTOR, f"#user-index img[title='{user}']"))
-            WebDriverWait(driver, delay).until(present)
-        except Exception as e:
+            absent = EC.invisibility_of_element_located((By.CSS_SELECTOR, "form input[name='email']"))
+            WebDriverWait(driver, delay).until(absent)
+        except Exception:
             raise Exception('Wrong username or password')
         
         time.sleep(1)
@@ -66,8 +58,11 @@ class IdolSankakuParser(SankakuParserBase):
 
     def search(self, tags):
         self.last_search_tags = quote_plus(tags)
-        data = self._get_html(f'https://idol.sankakucomplex.com/posts?{self.search_params}&tags={self.last_search_tags}')
-        return self._search_cleaner(data)
+    
+        json = self._get_json(f'https://i.sankakuapi.com/v2/posts/keyset?{self.search_params}&tags={self.last_search_tags}')
+        self.last_next_id = json['meta']['next']
+
+        return self._search_cleaner(json)
     
 
     def auto_tag(self, text):
@@ -78,17 +73,10 @@ class IdolSankakuParser(SankakuParserBase):
                 return []
 
             encoded_tag = quote_plus(last_word)
-            data = self._get_html(f'https://idol.sankakucomplex.com/tags/autosuggest?tag={encoded_tag}&version=1&type=posts', with_driver=False)
+            json_data = self._get_json(f'https://i.sankakuapi.com/tags/autosuggestCreating?tag={encoded_tag}&show_meta=0&target=post', with_driver=False)
 
-            soup = BeautifulSoup(data, 'html.parser')
-            tags = []
-            for li in soup.find_all('li', class_='ui-menu-item'):
-                tag_value = li.get('data-autocomplete-value')
-                if tag_value:
-                    tags.append(tag_value)
-
-            return tags
-        except Exception as e:
+            return [item["tagName"] for item in json_data if "tagName" in item]
+        except Exception:
             return []
 
 
@@ -96,105 +84,43 @@ class IdolSankakuParser(SankakuParserBase):
         if self.last_next_id is None:
             return []
 
-        data = self._get_html(f'https://idol.sankakucomplex.com/posts?{self.search_params}&tags={self.last_search_tags}&next={self.last_next_id}')
-        return self._search_cleaner(data)
+        json = self._get_json(f'https://i.sankakuapi.com/v2/posts/keyset?{self.search_params}&tags={self.last_search_tags}&next={self.last_next_id}')
+        self.last_next_id = json['meta']['next']
+
+        return self._search_cleaner(json)
     
 
-    def get_full_info(self, media):
-        data = self._get_html(f'https://idol.sankakucomplex.com/posts/{media["id"]}')
-        soup = BeautifulSoup(data, 'html.parser')
-
-        # Find media link
-        media_link = soup.find('a', id='image-link')
-        if media_link:
-            # Image case
-            href = media_link.get('href')
-            if not href:
-                raise ValueError("Media link has no href attribute")
-            if href.startswith('//'):
-                media_url = 'https:' + href
-            else:
-                media_url = href
-        else:
-            video = soup.find('video', id='image')
-            if video:
-                # Video case
-                src = video.get('src')
-                if not src:
-                    raise ValueError("Video has no src attribute")
-                if src.startswith('//'):
-                    media_url = 'https:' + src
-                else:
-                    media_url = src
-            else:
-                raise ValueError("No media (image or video) found")
-            
-        # Extract file extension from URL
-        file_name = media_url.split('?')[0].split('/')[-1]
-        if '.' not in file_name:
-            raise ValueError("Cannot determine file format from URL")
-
-        file_format = file_name.split('.')[-1].lower()
-
-        # Find tags
-        tag_links = soup.find_all('a', class_='tag-link')
-        if not tag_links:
-            raise ValueError("No tag links found")
-
-        tags = []
-        for link in tag_links:
-            tag_name = link.get_text(strip=True)
-            if tag_name:
-                tags.append(tag_name)
-
-        tags = list(dict.fromkeys(tags))
-
-        return {
-            'id': media['id'],
-            'file': media_url,
-            'format': file_format,
-            'tags': super()._tags_cleaner(tags),
-            'request_full_info': False
-        }
+    def get_full_info(self, info):
+        return info
     
 
-    def _get_html(self, url, with_driver=True):
+    def _get_json(self, url, with_driver=True, site_url=None):
         if with_driver:
-            session = self._get_requests_session()
-            response = session.get(url)
+            session = super()._get_requests_session(site_url)
+            json_data = session.get(url).json()
             session.close()
-            return response.text
+
+            if 'success' in json_data and not json_data['success']:
+                raise Exception(json_data['code'])
+
+            return json_data
         else:
-            return requests.get(url).text
+            return requests.get(url).json()
     
 
-    def _search_cleaner(self, data):
-        soup = BeautifulSoup(data, 'html.parser')
-
-        next_page_div = soup.find('div', attrs={'next-page-url': True})
-        if next_page_div:
-            next_page_url = next_page_div.get('next-page-url')
-            match = re.search(r'next=([^&]+)', next_page_url)
-            if match:
-                self.last_next_id = match.group(1)
-        else:
-            self.last_next_id = None
-        
-
+    def _search_cleaner(self, json):
         clean_data = []
-        scripts = soup.find_all('script', string=re.compile(r'Post\.register'))
-        for script in scripts:
-            script_content = script.string
-            match = re.search(r'Post\.register\((.*?)\);', script_content, re.DOTALL)
-            if match:
-                try:
-                    post_data = json.loads(match.group(1))
-                    if 'id' in post_data:
-                        clean_data.append({
-                            'id': post_data['id'],
-                            'request_full_info': True
-                        })
-                except json.JSONDecodeError:
-                    continue
+
+        for media in json['data']:
+            if media['file_url'] is None:
+                continue
+
+            clean_data.append({
+                'id': media['id'],
+                'file': media['file_url'],
+                'format': media['file_type'].split('/')[1],
+                'tags': super()._tags_cleaner(media['tag_names']),
+                'request_full_info': False
+            })
 
         return clean_data

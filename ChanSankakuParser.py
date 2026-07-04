@@ -15,21 +15,17 @@ class ChanSankakuParser(SankakuParserBase):
         self.last_search_tags = ""
 
 
-    def __del__(self):
-        super().__del__()
-
-
     def check_auth(self, user=None, delay=30):
         super()._get_driver().get("https://sankaku.app")
         try:
-            json = self._get_json(f'https://sankakuapi.com/users/me?lang=en')
-            if user:
-                if json['user']['name'] != user:
-                    self._clear_all_site_data()
-                    return False
-        
+            time.sleep(1)
+            me = self._get_json('https://sankakuapi.com/users/me?lang=en')
+            if user and (me or {}).get('user', {}).get('name') != user:
+                self._clear_all_site_data()
+                return False
+            
             return True
-        except:
+        except Exception:
             return False
 
 
@@ -58,9 +54,9 @@ class ChanSankakuParser(SankakuParserBase):
             not_now = driver.find_element(By.XPATH, "//div[normalize-space()='Not now']")
             not_now.click()
 
-            present = EC.presence_of_element_located((By.CSS_SELECTOR, "input[id='autocomplete']"))
-            WebDriverWait(driver, delay).until(present)
-        except Exception as e:
+            absent = EC.invisibility_of_element_located((By.CSS_SELECTOR, "form input[name='email']"))
+            WebDriverWait(driver, delay).until(absent)
+        except Exception:
             raise Exception('Wrong username or password')
         
         time.sleep(1)
@@ -71,7 +67,7 @@ class ChanSankakuParser(SankakuParserBase):
     
         json = self._get_json(f'https://sankakuapi.com/v2/posts/keyset?{self.search_params}&tags={self.last_search_tags}')
         self.last_next_id = json['meta']['next']
-        
+
         return self._search_cleaner(json)
     
 
@@ -86,7 +82,7 @@ class ChanSankakuParser(SankakuParserBase):
             json_data = self._get_json(f'https://sankakuapi.com/tags/autosuggestCreating?tag={encoded_tag}&show_meta=0&target=post', with_driver=False)
 
             return [item["tagName"] for item in json_data if "tagName" in item]
-        except:
+        except Exception:
             return []
 
 
@@ -101,6 +97,9 @@ class ChanSankakuParser(SankakuParserBase):
     
 
     def get_full_info(self, info):
+        id = info["id"]
+        json = self._get_json(f'https://sankakuapi.com/posts/{id}/fu')
+        info['file'] = json['file_url']
         return info
 
 
@@ -122,7 +121,7 @@ class ChanSankakuParser(SankakuParserBase):
         clean_data = []
 
         for media in json['data']:
-            if media['file_url'] is None:
+            if media['id'] is None:
                 continue
 
             clean_data.append({
@@ -130,7 +129,7 @@ class ChanSankakuParser(SankakuParserBase):
                 'file': media['file_url'],
                 'format': media['file_type'].split('/')[1],
                 'tags': super()._tags_cleaner(media['tag_names']),
-                'request_full_info': False
+                'request_full_info': media['file_url'] is None
             })
 
         return clean_data

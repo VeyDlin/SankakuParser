@@ -51,7 +51,7 @@ class Donwloader:
                 self.is_authorized = True
             else:
                 Logger.info("You are not authorized")
-        except:
+        except Exception:
             Logger.error("An error occurred while checking login")
 
         if not self.is_authorized and self.user and self.password:      
@@ -60,7 +60,7 @@ class Donwloader:
                 self.parser.auth(self.user, self.password)
                 Logger.success("Authorization successful")
                 self.is_authorized = True
-            except Exception as err:
+            except Exception:
                 Logger.warning("Authorization error; download without authorization")
             
         print()
@@ -89,6 +89,7 @@ class Donwloader:
                     Logger.error("Error loading next page", err)
             
         Logger.success("DONE")
+        self.parser.close()
 
 
     def _download_page(self, data):
