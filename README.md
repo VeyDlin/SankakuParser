@@ -28,7 +28,7 @@ It supports both **chan.sankakucomplex.com** and **idol.sankakucomplex.com** and
 Get the latest build from [Releases](https://github.com/VeyDlin/SankakuParser/releases/latest) — no Python needed:
 - **Windows** – `SankakuParser-<version>-windows.exe`, just run it
 - **Linux** – `SankakuParser-<version>-linux.tar.gz`, unpack and run `./SankakuParser`
-- **macOS** – `SankakuParser-<version>-macos-arm64.tar.gz` (Apple Silicon) or `-macos-x64.tar.gz` (Intel), unpack and run `./SankakuParser` in Terminal. The build is not signed, so macOS blocks it at first; allow it with `xattr -d com.apple.quarantine SankakuParser` or in System Settings → Privacy & Security → Open Anyway
+- **macOS** – `SankakuParser-<version>-macos-arm64.zip` (Apple Silicon) or `-macos-x64.zip` (Intel), unpack and double-click `SankakuParser` (it opens in Terminal). The build is not signed, so macOS blocks it at first; allow it with `xattr -d com.apple.quarantine SankakuParser` or in System Settings → Privacy & Security → Open Anyway
 
 Downloads and settings are kept next to the executable.
 

@@ -91,12 +91,20 @@ jobs:
           mkdir -p out
           cp dist/SankakuParser.exe "out/SankakuParser-${{ needs.version.outputs.tag }}-windows.exe"
 
-      # tar keeps the executable bit, which a bare download would lose.
-      - name: Package (Linux, macOS)
-        if: matrix.platform != 'windows'
+      # Both archives keep the executable bit, which a bare download would lose.
+      - name: Package (Linux)
+        if: matrix.platform == 'linux'
         run: |
           mkdir -p out
-          tar -czf "out/SankakuParser-${{ needs.version.outputs.tag }}-${{ matrix.platform }}.tar.gz" -C dist SankakuParser
+          tar -czf "out/SankakuParser-${{ needs.version.outputs.tag }}-linux.tar.gz" -C dist SankakuParser
+
+      # A zip is what Finder opens natively (and what notarization takes);
+      # ditto is Apple's own way to make one that keeps file permissions.
+      - name: Package (macOS)
+        if: startsWith(matrix.platform, 'macos')
+        run: |
+          mkdir -p out
+          ditto -c -k --keepParent dist/SankakuParser "out/SankakuParser-${{ needs.version.outputs.tag }}-${{ matrix.platform }}.zip"
 
       - uses: actions/upload-artifact@v7
         with:
