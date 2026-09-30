@@ -11,15 +11,10 @@ It supports both **chan.sankakucomplex.com** and **idol.sankakucomplex.com** and
 ## Features
 - **Chan and Idol** – Each site in its own tab; both can download at the same time
 - **Sign-in** – Optional; the password is never saved and you stay signed in between runs
-- **Images and Videos** – All media types are downloaded
-- **Tag Search** – The same search syntax as SankakuComplex, with tag suggestions as you type
 - **Search Filters** – Sort, date, star rating, size, file type, video duration, and posts liked, uploaded or voted by a user. **my likes** limits the search to your own likes
 - **Tag Saving** – Tags next to each file, as `.txt` and/or `.json` (grouped by category — handy for training datasets)
 - **Resume** – Files you already have are skipped, so an interrupted search can be continued
-- **Download List** – Every file with its progress and status; see its tags or open its folder
-- **Parallel Downloads** – Up to 4 files at once, with adjustable pauses between requests
-- **Pause & Stop** – At any moment
-- **Mouse and Keyboard** – Every control works with both
+- **Parallel Downloads** – Up to 4 files at once, with adjustable pauses between requests (in **settings**)
 
 ## Preview
 <img src=".github/downloads.png" />
