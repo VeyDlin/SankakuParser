@@ -26,13 +26,41 @@ from Sankaku.Tui.TagFormats import TagFormatPicker
 from Sankaku.Tui.Widgets import Action, Toggle, format_size
 from pathlib import Path
 import asyncio
-import re
+import sys
 import time
 
 
 FALLBACK_FOLDER: str = 'download'
 # Search + filters can make a very long name; folders get a readable prefix.
 MAX_FOLDER_NAME: int = 64
+# What each system rejects in a name, besides control characters: Linux only
+# '/', macOS also ':' (Finder shows it as '/'), Windows a whole set.
+FORBIDDEN_CHARS: dict[str, str] = {
+    'win32': '<>:"/\\|?*',
+    'darwin': '/:'
+}
+DEFAULT_FORBIDDEN_CHARS: str = '/'
+# Rejected characters become full-width look-alikes (as yt-dlp does), so tags
+# like >_< or re:zero keep their meaning.
+LOOKALIKES: dict[str, str] = {
+    '<': '＜',
+    '>': '＞',
+    ':': '：',
+    '"': '＂',
+    '/': '⧸',
+    '\\': '⧹',
+    '|': '｜',
+    '?': '？',
+    '*': '＊'
+}
+# Stands in for a dot where a plain one would be dropped or hide the folder.
+DOT_LOOKALIKE: str = '．'
+# Device names Windows will not create a folder under, with or without extension.
+RESERVED_NAMES: frozenset[str] = frozenset({
+    'con', 'prn', 'aux', 'nul',
+    *(f'com{number}' for number in range(1, 10)),
+    *(f'lpt{number}' for number in range(1, 10))
+})
 # A known total keeps an idle bar empty instead of running the 'unknown' animation.
 IDLE_TOTAL: int = 100
 
@@ -50,11 +78,25 @@ BADGE_STOPPING: str = '■'
 SUGGEST_DEBOUNCE_SECONDS: float = 0.25
 
 
-def folder_name_for(query: str) -> str:
-    # \W is Unicode-aware: Cyrillic, Japanese and other letters are kept, and
-    # everything a file system could reject (punctuation, slashes, colons) goes.
-    name = re.sub(r'[\W_]+', ' ', query)
-    name = re.sub(r' +', '_', name.lower().strip())[:MAX_FOLDER_NAME].strip('_')
+def folder_name_for(query: str, platform: str = sys.platform) -> str:
+    """The search as a folder name: only what this system rejects is changed.
+
+    Tags made of punctuation (^_^, >_<) stay recognisable, and letters of any
+    alphabet are kept.
+    """
+    forbidden = FORBIDDEN_CHARS.get(platform, DEFAULT_FORBIDDEN_CHARS)
+    name = ''.join(LOOKALIKES[char] if char in forbidden else char for char in query if char.isprintable())
+    name = '_'.join(name.lower().split())[:MAX_FOLDER_NAME]
+    if platform == 'win32':
+        # Windows drops trailing dots, and keeps device names for itself.
+        kept = name.rstrip('.')
+        name = kept + DOT_LOOKALIKE * (len(name) - len(kept))
+        base, dot, rest = name.partition('.')
+        if base in RESERVED_NAMES:
+            name = f'{base}_{dot}{rest}'
+    elif name.startswith('.'):
+        # A leading dot would hide the folder.
+        name = DOT_LOOKALIKE + name[1:]
 
     return name or FALLBACK_FOLDER
 
@@ -478,7 +520,7 @@ class SitePane(Vertical):
 
         if not self.is_signed_in() and count_operators(query) > ANONYMOUS_OPERATOR_LIMIT:
             self.show_error(
-                f'Sankaku allows {ANONYMOUS_OPERATOR_LIMIT} advanced filters (date, type, duration, size, users) '
+                f'Sankaku allows {ANONYMOUS_OPERATOR_LIMIT} advanced filters (date, type, duration, size, age rating, users) '
                 'without sign-in · remove some or sign in',
                 '#filters'
             )

@@ -468,7 +468,7 @@ class SankakuApi:
         if 'operator-tags-limit' in code:
             limit = data.get('param') or 'a few'
             return (
-                f'Sankaku allows only {limit} advanced filters (date, type, duration, size, users) '
+                f'Sankaku allows only {limit} advanced filters (date, type, duration, size, age rating, users) '
                 'per search without signing in'
             )
 

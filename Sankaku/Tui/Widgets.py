@@ -1,3 +1,4 @@
+from enum import Enum
 from textual import events
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -265,6 +266,128 @@ class ChoiceRow(Horizontal):
         self.value = value
         for option in self.query(ChoiceOption):
             option.selected = option.value == value
+
+
+class Mark(Enum):
+    """A CycleOption's state: no filter, only this, or everything but this."""
+
+    ANY = 'any'
+    ONLY = 'only'
+    NOT = 'not'
+
+
+# Each click moves an option one step along this cycle.
+NEXT_MARK: dict[Mark, Mark] = {
+    Mark.ANY: Mark.ONLY,
+    Mark.ONLY: Mark.NOT,
+    Mark.NOT: Mark.ANY
+}
+
+
+class CycleOption(Action):
+    """One option of a CycleRow: a click cycles it any → only (accent) → not (red)."""
+
+    DEFAULT_CSS = '''
+    CycleOption {
+        margin-right: 1;
+    }
+
+    CycleOption.-only {
+        color: $accent;
+        text-style: bold;
+    }
+
+    /* Struck through as well as red, so 'not' does not rest on colour alone. */
+    CycleOption.-not {
+        color: $error;
+        text-style: bold strike;
+    }
+
+    CycleOption.-only:hover,
+    CycleOption.-only:focus {
+        color: #141414;
+    }
+
+    CycleOption.-not:hover,
+    CycleOption.-not:focus {
+        color: #141414;
+        background: $error;
+        text-style: bold strike;
+    }
+    '''
+
+    mark: reactive[Mark] = reactive(Mark.ANY)
+
+
+    def __init__(self, label: str, value: object, id: str | None = None) -> None:
+        super().__init__(label, id=id)
+        self.value: object = value
+
+
+    def watch_mark(self, mark: Mark) -> None:
+        self.set_class(mark is Mark.ONLY, '-only')
+        self.set_class(mark is Mark.NOT, '-not')
+
+
+class CycleRow(Horizontal):
+    """Options that each cycle any → only → not; for filters that can be negated."""
+
+    DEFAULT_CSS = '''
+    CycleRow {
+        width: auto;
+        height: 1;
+        margin-right: 2;
+    }
+    '''
+
+
+    class Changed(Message):
+        def __init__(self, row: 'CycleRow') -> None:
+            super().__init__()
+            self.row: CycleRow = row
+
+
+        @property
+        def control(self) -> 'CycleRow':
+            return self.row
+
+
+    def __init__(self, options: list[tuple[object, str]], marks: dict[object, Mark], id: str) -> None:
+        super().__init__(id=id)
+        self.options: list[tuple[object, str]] = options
+        self.marks: dict[object, Mark] = {value: marks.get(value, Mark.ANY) for value, _ in options}
+
+
+    def compose(self) -> ComposeResult:
+        for index, (value, label) in enumerate(self.options):
+            option = CycleOption(label, value, id=f'{self.id}-{index}')
+            option.mark = self.marks[value]
+            yield option
+
+
+    def on_action_pressed(self, event: Action.Pressed) -> None:
+        if not isinstance(event.action, CycleOption):
+            return
+
+        event.stop()
+        self.set_mark(event.action.value, NEXT_MARK[event.action.mark])
+        self.post_message(self.Changed(self))
+
+
+    def set_mark(self, value: object, mark: Mark) -> None:
+        self.marks[value] = mark
+        for option in self.query(CycleOption):
+            if option.value == value:
+                option.mark = mark
+
+
+    def clear(self) -> None:
+        for value in self.marks:
+            self.set_mark(value, Mark.ANY)
+
+
+    def marked(self, mark: Mark) -> list[object]:
+        return [value for value, current in self.marks.items() if current is mark]
 
 
 class Toggle(Static, can_focus=True):

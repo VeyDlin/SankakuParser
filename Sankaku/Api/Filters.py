@@ -15,6 +15,14 @@ class Sort(Enum):
     RECENTLY_VOTED = 'order:recently_voted'
 
 
+class Rating(Enum):
+    """Age ratings; the site shows them as G, R15+ and R18+."""
+
+    GENERAL = 's'
+    QUESTIONABLE = 'q'
+    EXPLICIT = 'e'
+
+
 class DateRange(Enum):
     ANY = 'any'
     TODAY = 'today'
@@ -58,12 +66,15 @@ class Duration(Enum):
 MAX_STARS: int = 5
 
 # Meta-tags the API rations: an anonymous search may use at most
-# ANONYMOUS_OPERATOR_LIMIT of them (verified live; order:, threshold:, rating:
-# and plain tags are free). The limit for signed-in users is not known.
+# ANONYMOUS_OPERATOR_LIMIT of them (verified live; order:, threshold: and plain
+# tags are free). The limit for signed-in users is not known.
 OPERATOR_PREFIXES: tuple[str, ...] = (
     'date:', 'file_type:', 'duration:', 'width:', 'height:', 'mpixels:', 'fav:', 'user:', 'voted:'
 )
 ANONYMOUS_OPERATOR_LIMIT: int = 2
+# The one free rating tag: the site adds rating:s itself for guests. Every other
+# rating tag counts, aliases (rating:safe) and negations (-rating:e) included.
+FREE_RATING_TAG: str = 'rating:s'
 # The API's date tags are UTC, to the hour: date:2024-03-10T00:00..2024-03-17T00:00
 DATE_TAG_FORMAT: str = '%Y-%m-%dT%H:00'
 
@@ -71,6 +82,9 @@ DATE_TAG_FORMAT: str = '%Y-%m-%dT%H:00'
 @dataclass(frozen=True)
 class SearchFilters:
     sort: Sort = Sort.NEWEST
+    # Age rating: 'only these' wins over 'not these'; both empty means any.
+    only_ratings: frozenset[Rating] = frozenset()
+    excluded_ratings: frozenset[Rating] = frozenset()
     date_range: DateRange = DateRange.ANY
     date_from: date | None = None      # CUSTOM only, inclusive local days
     date_to: date | None = None
@@ -99,6 +113,10 @@ class SearchFilters:
         if self.sort is not Sort.NEWEST:
             tags.append(self.sort.value)
 
+        rating_tag = self.rating_tag()
+        if rating_tag:
+            tags.append(rating_tag)
+
         date_tag = self.date_tag(now or datetime.now().astimezone())
         if date_tag:
             tags.append(date_tag)
@@ -121,6 +139,33 @@ class SearchFilters:
                 tags.append(f'{prefix}:{cleaned}')
 
         return tags
+
+
+    def allowed_ratings(self) -> list[Rating]:
+        if self.only_ratings:
+            return [rating for rating in Rating if rating in self.only_ratings]
+
+        return [rating for rating in Rating if rating not in self.excluded_ratings]
+
+
+    def left_out_rating(self) -> Rating | None:
+        """The one rating left out, when exactly one is."""
+        left_out = [rating for rating in Rating if rating not in self.allowed_ratings()]
+
+        return left_out[0] if len(left_out) == 1 else None
+
+
+    def rating_tag(self) -> str:
+        """A single tag for any mix of 'only' and 'not': a post has exactly one rating."""
+        allowed = self.allowed_ratings()
+        if len(allowed) == 1:
+            return f'rating:{allowed[0].value}'
+
+        left_out = self.left_out_rating()
+        if left_out is not None:
+            return f'-rating:{left_out.value}'
+
+        return ''
 
 
     def date_tag(self, now: datetime) -> str:
@@ -174,14 +219,17 @@ def ceil_hour(moment: datetime) -> datetime:
     return floored + timedelta(hours=1)
 
 
+def is_operator(tag: str) -> bool:
+    """Whether a tag counts toward the anonymous limit."""
+    if tag.lstrip('-').lower().startswith('rating:'):
+        return tag.lower() != FREE_RATING_TAG
+
+    return tag.lstrip('-').startswith(OPERATOR_PREFIXES)
+
+
 def count_operators(query: str) -> int:
     """How many rationed meta-tags a search string uses."""
-    count = 0
-    for tag in query.split():
-        if tag.lstrip('-').startswith(OPERATOR_PREFIXES):
-            count += 1
-
-    return count
+    return sum(1 for tag in query.split() if is_operator(tag))
 
 
 def combine_query(query: str, filters: SearchFilters, now: datetime | None = None) -> str:

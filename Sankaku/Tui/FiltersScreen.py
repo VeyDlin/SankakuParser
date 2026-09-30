@@ -13,6 +13,7 @@ from Sankaku.Api.Filters import (
     DateRange,
     Duration,
     FileType,
+    Rating,
     Resolution,
     SearchFilters,
     Sort,
@@ -21,7 +22,7 @@ from Sankaku.Api.Filters import (
 from Sankaku.Tui.Navigation import ArrowNavigation
 from Sankaku.Tui.Sites import site_title
 from Sankaku.Tui.Suggestions import MIN_TERM_LENGTH, NameInput, SuggestionMenu
-from Sankaku.Tui.Widgets import Action, ChoiceOption, ChoiceRow
+from Sankaku.Tui.Widgets import Action, ChoiceOption, ChoiceRow, CycleRow, Mark
 import asyncio
 
 
@@ -32,6 +33,12 @@ SORT_LABELS: dict[Sort, str] = {
     Sort.RANDOM: 'random',
     Sort.RECENTLY_FAVORITED: 'recently liked',
     Sort.RECENTLY_VOTED: 'recently voted'
+}
+
+RATING_LABELS: dict[Rating, str] = {
+    Rating.GENERAL: 'G',
+    Rating.QUESTIONABLE: 'R15+',
+    Rating.EXPLICIT: 'R18+'
 }
 
 DATE_LABELS: dict[DateRange, str] = {
@@ -90,6 +97,13 @@ def summarize(filters: SearchFilters) -> list[str]:
     parts: list[str] = []
     if filters.sort is not Sort.NEWEST:
         parts.append(SORT_LABELS[filters.sort])
+
+    allowed = filters.allowed_ratings()
+    left_out = filters.left_out_rating()
+    if len(allowed) == 1:
+        parts.append(f'{RATING_LABELS[allowed[0]]} only')
+    elif left_out is not None:
+        parts.append(f'no {RATING_LABELS[left_out]}')
 
     if filters.date_range is DateRange.CUSTOM and filters.date_from is not None:
         parts.append(f'{filters.date_from:%Y-%m-%d} – {(filters.date_to or date.today()):%Y-%m-%d}')
@@ -151,6 +165,14 @@ class FiltersScreen(ModalScreen[SearchFilters | None], ArrowNavigation):
             yield Rule()
 
             yield from self.choice_field('sort', 'sort', SORT_LABELS, f.sort)
+
+            marks: dict[object, Mark] = {rating: Mark.NOT for rating in f.excluded_ratings}
+            marks.update({rating: Mark.ONLY for rating in f.only_ratings})
+            with Horizontal(classes='field'):
+                yield Label('age rating', classes='caption')
+                yield CycleRow(list(RATING_LABELS.items()), marks, id='rating')
+                yield Static('[dim]click: only → not[/]', classes='unit')
+
             yield from self.choice_field('date', 'date', DATE_LABELS, f.date_range)
             with Horizontal(classes='field'):
                 yield Label('', classes='caption')
@@ -224,6 +246,10 @@ class FiltersScreen(ModalScreen[SearchFilters | None], ArrowNavigation):
         self.refresh_message()
 
 
+    def on_cycle_row_changed(self, event: CycleRow.Changed) -> None:
+        self.refresh_message()
+
+
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id in {field_id for field_id, _ in USER_FIELDS} and event.input.has_focus:
             self.suggest_users(event.input.id, event.value)
@@ -293,6 +319,7 @@ class FiltersScreen(ModalScreen[SearchFilters | None], ArrowNavigation):
     def reset(self) -> None:
         defaults = SearchFilters()
         self.query_one('#sort', ChoiceRow).select(defaults.sort)
+        self.query_one('#rating', CycleRow).clear()
         self.query_one('#date', ChoiceRow).select(defaults.date_range)
         self.query_one('#stars', ChoiceRow).select(defaults.min_stars)
         self.query_one('#size', ChoiceRow).select(defaults.resolution)
@@ -315,9 +342,12 @@ class FiltersScreen(ModalScreen[SearchFilters | None], ArrowNavigation):
             if date_to is not None and date_to < date_from:
                 raise ValueError('the end date is before the start date')
 
-        return replace(
+        ratings = self.query_one('#rating', CycleRow)
+        filters = replace(
             self.filters,
             sort=self.query_one('#sort', ChoiceRow).value,
+            only_ratings=frozenset(value for value in ratings.marked(Mark.ONLY) if isinstance(value, Rating)),
+            excluded_ratings=frozenset(value for value in ratings.marked(Mark.NOT) if isinstance(value, Rating)),
             date_range=date_range,
             date_from=date_from if date_range is DateRange.CUSTOM else None,
             date_to=date_to if date_range is DateRange.CUSTOM else None,
@@ -329,6 +359,10 @@ class FiltersScreen(ModalScreen[SearchFilters | None], ArrowNavigation):
             uploaded_by=self.query_one('#uploaded-by', Input).value.strip(),
             voted_by=self.query_one('#voted-by', Input).value.strip()
         )
+        if not filters.allowed_ratings():
+            raise ValueError('every age rating is excluded')
+
+        return filters
 
 
     def operator_count(self, filters: SearchFilters) -> int:

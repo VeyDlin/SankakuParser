@@ -11,7 +11,7 @@ It supports both **chan.sankakucomplex.com** and **idol.sankakucomplex.com** and
 ## Features
 - **Chan and Idol** – Each site in its own tab; both can download at the same time
 - **Sign-in** – Optional; the password is never saved and you stay signed in between runs
-- **Search Filters** – Sort, date, star rating, size, file type, video duration, and posts liked, uploaded or voted by a user. **my likes** limits the search to your own likes
+- **Search Filters** – Sort, age rating (only or excluding G, R15+, R18+), date, star rating, size, file type, video duration, and posts liked, uploaded or voted by a user. **my likes** limits the search to your own likes
 - **Tag Saving** – Tags next to each file, as `.txt` and/or `.json` (grouped by category — handy for training datasets)
 - **Resume** – Files you already have are skipped, so an interrupted search can be continued
 - **Parallel Downloads** – Up to 4 files at once, with adjustable pauses between requests (in **settings**)
@@ -28,13 +28,14 @@ It supports both **chan.sankakucomplex.com** and **idol.sankakucomplex.com** and
 Get the latest build from [Releases](https://github.com/VeyDlin/SankakuParser/releases/latest) — no Python needed:
 - **Windows** – `SankakuParser-<version>-windows.exe`, just run it
 - **Linux** – `SankakuParser-<version>-linux.tar.gz`, unpack and run `./SankakuParser`
+- **macOS** – `SankakuParser-<version>-macos-arm64.tar.gz` (Apple Silicon) or `-macos-x64.tar.gz` (Intel), unpack and run `./SankakuParser` in Terminal. The build is not signed, so macOS blocks it at first; allow it with `xattr -d com.apple.quarantine SankakuParser` or in System Settings → Privacy & Security → Open Anyway
 
 Downloads and settings are kept next to the executable.
 
 ## Running from source
 Requires Python 3.10+.
 
-Run `start.bat` — it is a polyglot script: double-click it on Windows, or run `./start.bat` on Linux. The first run creates a virtual environment and installs the dependencies, which may take some time.
+Run `start.bat` — it is a polyglot script: double-click it on Windows, or run `./start.bat` on Linux and macOS. The first run creates a virtual environment and installs the dependencies, which may take some time.
 
 ## Getting started
 1. Pick the **Chan** or **Idol** tab. Each tab checks its sign-in on start and shows the result in the top-right corner
@@ -60,6 +61,6 @@ Scrolling up in the download list stops it from following new files; a **↓ scr
 
 ## Search limits
 
-Sankaku rations "advanced" filters: **without signing in, a search may use at most 2** of date, file type, duration, size and the user filters (sort, star rating and plain tags are free). The filters dialog counts them as you go. Searching by who *liked* posts usually times out on Sankaku's side without signing in, and a user who keeps likes or votes private cannot be searched by them.
+Sankaku rations "advanced" filters: **without signing in, a search may use at most 2** of date, file type, duration, size, age rating and the user filters (sort, star rating, plain tags and "G only" are free). The filters dialog counts them as you go. Searching by who *liked* posts usually times out on Sankaku's side without signing in, and a user who keeps likes or votes private cannot be searched by them.
 
 Posts that need an account are listed as `sign-in needed` instead of being downloaded.

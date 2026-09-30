@@ -55,9 +55,14 @@ jobs:
         include:
           - os: windows-latest
             platform: windows
-          # The oldest supported runner, so the binary runs on older glibc too.
+          # The oldest supported runners, so the binaries also run on older
+          # systems (glibc on Linux, the OS version on macOS).
           - os: ubuntu-22.04
             platform: linux
+          - os: macos-15
+            platform: macos-arm64
+          - os: macos-15-intel
+            platform: macos-x64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -87,11 +92,11 @@ jobs:
           cp dist/SankakuParser.exe "out/SankakuParser-${{ needs.version.outputs.tag }}-windows.exe"
 
       # tar keeps the executable bit, which a bare download would lose.
-      - name: Package (Linux)
-        if: matrix.platform == 'linux'
+      - name: Package (Linux, macOS)
+        if: matrix.platform != 'windows'
         run: |
           mkdir -p out
-          tar -czf "out/SankakuParser-${{ needs.version.outputs.tag }}-linux.tar.gz" -C dist SankakuParser
+          tar -czf "out/SankakuParser-${{ needs.version.outputs.tag }}-${{ matrix.platform }}.tar.gz" -C dist SankakuParser
 
       - uses: actions/upload-artifact@v7
         with:
