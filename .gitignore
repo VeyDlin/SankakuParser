@@ -4,3 +4,6 @@ data/
 .config/
 .idea
 .serena/
+build/
+dist/
+*.spec

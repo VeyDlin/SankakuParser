@@ -1,0 +1,125 @@
+name: Release
+
+# A release is made either by pushing a tag (git tag v2.0.0 && git push origin v2.0.0)
+# or from the Actions tab: "Run workflow" with a version such as v2.0.0, which
+# tags the current commit of the chosen branch.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, e.g. v2.0.0'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: tag
+        name: Resolve the tag
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            tag="$GITHUB_REF_NAME"
+          else
+            tag="$INPUT_VERSION"
+            case "$tag" in v*) ;; *) tag="v$tag" ;; esac
+          fi
+
+          if ! echo "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$'; then
+            echo "::error::'$tag' is not a version like v2.0.0"
+            exit 1
+          fi
+
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+            echo "::error::Tag $tag already exists"
+            exit 1
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: version
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+          # The oldest supported runner, so the binary runs on older glibc too.
+          - os: ubuntu-22.04
+            platform: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt pyinstaller
+
+      # Textual and Rich import some modules lazily; collect them explicitly.
+      - name: Build
+        shell: bash
+        run: |
+          python -m PyInstaller --noconfirm --onefile --name SankakuParser \
+            --add-data "Sankaku/Tui/App.tcss:Sankaku/Tui" \
+            --collect-submodules textual \
+            --collect-submodules rich \
+            main.py
+
+      - name: Package (Windows)
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
+          mkdir -p out
+          cp dist/SankakuParser.exe "out/SankakuParser-${{ needs.version.outputs.tag }}-windows.exe"
+
+      # tar keeps the executable bit, which a bare download would lose.
+      - name: Package (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          mkdir -p out
+          tar -czf "out/SankakuParser-${{ needs.version.outputs.tag }}-linux.tar.gz" -C dist SankakuParser
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.platform }}
+          path: out/*
+
+  release:
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+
+      - name: Source archive
+        run: |
+          tag="${{ needs.version.outputs.tag }}"
+          git archive --format=zip --prefix="SankakuParser-$tag/" -o "out/SankakuParser-$tag-source.zip" HEAD
+
+      # For a manual run gh creates the tag on the built commit.
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ needs.version.outputs.tag }}" out/* \
+            --target "$GITHUB_SHA" \
+            --title "${{ needs.version.outputs.tag }}" \
+            --generate-notes

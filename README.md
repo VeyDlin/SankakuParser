@@ -24,15 +24,23 @@ It supports both **chan.sankakucomplex.com** and **idol.sankakucomplex.com** and
 
 # Usage
 
-## Requirements
-- Python 3.10+
+## Download
+Get the latest build from [Releases](https://github.com/VeyDlin/SankakuParser/releases/latest) — no Python needed:
+- **Windows** – `SankakuParser-<version>-windows.exe`, just run it
+- **Linux** – `SankakuParser-<version>-linux.tar.gz`, unpack and run `./SankakuParser`
 
-## Setup & Execution
-1. Run `start.bat` — it is a polyglot script: double-click it on Windows, or run `./start.bat` on Linux. The first run creates a virtual environment and installs the dependencies, which may take some time
-2. Pick the **Chan** or **Idol** tab. Each tab checks its sign-in on start and shows the result in the top-right corner
-3. Click **sign in** to sign in, or browse anonymously
-4. Enter a search query (matching tags drop down as you type), optionally set **filters**, and press **▶ start**
-5. Enjoy your downloads!
+Downloads and settings are kept next to the executable.
+
+## Running from source
+Requires Python 3.10+.
+
+Run `start.bat` — it is a polyglot script: double-click it on Windows, or run `./start.bat` on Linux. The first run creates a virtual environment and installs the dependencies, which may take some time.
+
+## Getting started
+1. Pick the **Chan** or **Idol** tab. Each tab checks its sign-in on start and shows the result in the top-right corner
+2. Click **sign in** to sign in, or browse anonymously
+3. Enter a search query (matching tags drop down as you type), optionally set **filters**, and press **▶ start**
+4. Enjoy your downloads!
 
 Each search goes to its own folder under the site's save folder (`data/chan/` or `data/idol/` by default), named after the search unless you type another name in **folder**. **limit** caps the number of media files; leave it empty to download everything. **split by format** sorts files into subfolders by extension, and **tags** picks the tag files to write.
 

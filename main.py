@@ -4,7 +4,9 @@ from Sankaku.Tui import SankakuApp
 import sys
 
 
-ROOT: Path = Path(__file__).resolve().parent
+# A release build keeps data/ and .config/ next to the executable, not in its
+# temporary unpack folder.
+ROOT: Path = Path(sys.executable if getattr(sys, 'frozen', False) else __file__).resolve().parent
 
 
 def main() -> int:
