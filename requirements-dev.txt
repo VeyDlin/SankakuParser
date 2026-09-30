@@ -1,0 +1,6 @@
+-r requirements.txt
+
+# Pyright/Pylance bundle their own stubs for requests, so these are only
+# needed if you also run mypy from the command line.
+mypy
+types-requests

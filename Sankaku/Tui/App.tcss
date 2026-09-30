@@ -1,0 +1,504 @@
+/* Flat, borderless look in the spirit of Claude Code: text on the terminal
+   background, thin rules between sections, one accent colour, dim hints. */
+
+/* The terminal's own background shows through everywhere (ansi_default needs
+   the app to run with ansi_color=True). */
+Screen,
+ContentSwitcher {
+    background: ansi_default;
+}
+
+#topbar {
+    height: 1;
+    margin: 0 1;
+}
+
+/* The gap keeps the name's hover/focus fill off the 'signed in as' text. */
+#account-note {
+    width: auto;
+    padding: 0 0 0 1;
+    margin-right: 1;
+}
+
+#settings {
+    margin-left: 1;
+}
+
+/* Settings: a wider dialog with a caption column wide enough for 'save folder'. */
+SettingsScreen,
+FiltersScreen {
+    align: center middle;
+    background: black 60%;
+}
+
+#settings-dialog,
+#filters-dialog {
+    width: 96;
+    max-width: 100%;
+    height: auto;
+    max-height: 100%;
+    border: round $accent 60%;
+    background: ansi_default;
+    padding: 0 1;
+}
+
+#settings-dialog .caption,
+#filters-dialog .caption {
+    width: 14;
+}
+
+#settings-dialog .section {
+    padding: 0 1;
+    margin: 1 0 1 0;
+}
+
+#settings-dialog #path-menu {
+    margin-left: 14;
+}
+
+#settings-dialog .number {
+    width: 10;
+}
+
+#settings-dialog .unit {
+    width: 1fr;
+    padding: 0 1;
+}
+
+/* Filter hints ('stars and up', 'video only') sit at the far right. */
+#filters-dialog .unit {
+    width: 1fr;
+    padding: 0 1;
+    text-align: right;
+}
+
+#settings-dialog .hint-row {
+    height: 1;
+    padding: 0 0 0 15;
+}
+
+#settings-dialog .actions,
+#filters-dialog .actions {
+    margin-top: 1;
+}
+
+/* Tag-format dropdown: positioned under its button from code (margin). */
+TagFormatsMenu {
+    align: left top;
+    background: transparent;
+}
+
+#tag-formats-menu {
+    width: auto;
+    height: auto;
+    padding: 0;
+    border: round $foreground 25%;
+    background: ansi_default;
+}
+
+/* Sign-out dropdown: a transparent screen whose only content hangs under the
+   top-right corner; a click on the empty rest of it closes the menu. */
+AccountMenu {
+    align: right top;
+    background: transparent;
+}
+
+#account-menu {
+    width: 20;
+    height: auto;
+    margin: 1 12 0 0;
+    padding: 0;
+    border: round $foreground 25%;
+    background: ansi_default;
+}
+
+#account-menu Action {
+    width: 1fr;
+}
+
+#account:disabled {
+    color: $text-muted;
+    pointer: default;
+}
+
+/* Top bar tabs: the current page is accented; focus/hover fill like any action. */
+.site-tab {
+    margin-right: 1;
+}
+
+/* width: 100%, not the default 1fr: in a vertical layout 1fr is cut by the
+   side margins of sibling rows (top bar, form), which left the list 2 columns
+   short of the window edge per level. */
+ContentSwitcher {
+    width: 100%;
+    height: 1fr;
+}
+
+/* No side padding on the pane itself: the download list runs edge to edge
+   (its scrollbar at the window edge); the form and status are inset instead. */
+SitePane {
+    width: 100%;
+    height: 1fr;
+    padding: 1 0 0 0;
+}
+
+SitePane .form,
+SitePane #list-rule {
+    margin: 0 1;
+}
+
+SitePane #activity {
+    margin: 0 1 1 1;
+}
+
+.line {
+    height: 1;
+}
+
+.fill {
+    width: 1fr;
+}
+
+.hint {
+    color: $text-muted;
+    padding: 0 1;
+}
+
+Rule {
+    margin: 0;
+    color: $panel-lighten-2;
+}
+
+.caption {
+    width: 12;
+    padding: 0 1;
+    color: $text-muted;
+}
+
+.form {
+    height: auto;
+}
+
+/* A form row: caption, then a field that reads as a field — a faint tinted
+   strip, brighter while focused. */
+.field,
+.field-row {
+    height: 1;
+}
+
+.field,
+.field-group {
+    margin-bottom: 1;
+}
+
+.field-group {
+    height: auto;
+}
+
+Input {
+    border: none;
+    padding: 0 1;
+    background: $foreground 7%;
+}
+
+Input:focus {
+    background: $foreground 13%;
+}
+
+/* Locked while downloading: no tint, just dimmed text. A tinted strip on the
+   transparent background would blend against black and read as a black box. */
+Input:disabled {
+    background: transparent;
+    color: $text-disabled;
+}
+
+Input > .input--placeholder,
+Input > .input--suggestion {
+    color: $text-disabled;
+}
+
+#query {
+    width: 1fr;
+}
+
+#folder {
+    width: 1fr;
+}
+
+#limit {
+    width: 1fr;
+}
+
+.field Toggle {
+    margin-right: 1;
+}
+
+/* Start / pause / stop open the status line, in a box wide enough for the
+   running pair, so swapping them never moves the status text. */
+#status-line {
+    height: 1;
+}
+
+/* Room for the widest pair, '▶ resume ■ stop'. */
+#player {
+    width: 20;
+    height: 1;
+}
+
+#player Action {
+    margin-right: 1;
+}
+
+/* A field or button at fault in the last error: red until it is touched. */
+Input.-invalid,
+Input.-invalid:focus {
+    background: $error 30%;
+}
+
+Action.-invalid {
+    color: $error;
+}
+
+#activity {
+    height: auto;
+    padding: 0 1;
+    margin-bottom: 1;
+}
+
+#status,
+#file-name {
+    height: 1;
+}
+
+ProgressBar {
+    width: 100%;
+    height: 1;
+    padding: 0 0 0 2;
+}
+
+ProgressBar Bar {
+    width: 1fr;
+}
+
+ProgressBar Bar > .bar--bar {
+    color: $accent;
+    background: $panel;
+}
+
+ProgressBar Bar > .bar--complete {
+    color: $success;
+    background: $panel;
+}
+
+ProgressBar PercentageStatus {
+    color: $text-muted;
+}
+
+#log {
+    height: 1fr;
+    min-height: 3;
+    padding: 0 1;
+    background: transparent;
+    border: none;
+    scrollbar-size-vertical: 1;
+    scrollbar-background: ansi_default;
+    scrollbar-color: $panel-lighten-2;
+    scrollbar-color-hover: $text-muted;
+}
+
+/* The app stays visible behind the dialog, dimmed: a translucent black veil is
+   blended over what is already on screen. */
+AuthScreen {
+    align: center middle;
+    background: black 60%;
+}
+
+/* Dialogs scroll on their own when the terminal is too short for them. */
+#dialog,
+#settings-dialog,
+#filters-dialog {
+    max-height: 100%;
+    overflow-y: auto;
+    scrollbar-size-vertical: 1;
+    scrollbar-background: ansi_default;
+    scrollbar-color: $panel-lighten-2;
+    scrollbar-color-hover: $text-muted;
+    scrollbar-color-active: $accent;
+}
+
+#dialog {
+    width: 64;
+    max-width: 100%;
+    height: auto;
+    border: round $accent 60%;
+    background: ansi_default;
+    padding: 0 1;
+}
+
+/* A one-line message slot (errors); long text is cut, never wrapped, so the
+   row keeps its height. */
+.message {
+    height: 1;
+    padding: 0 1;
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
+}
+
+#auth-status {
+    padding: 0 1;
+}
+
+#dialog .line Input {
+    width: 1fr;
+}
+
+#auth-hint {
+    height: auto;
+    margin-top: 1;
+    padding: 0 1;
+    color: $text-muted;
+}
+
+#auth-hint,
+.hint {
+    text-style: dim;
+}
+
+#dialog .actions {
+    margin-top: 1;
+}
+
+/* Toasts: in ansi mode Textual paints them with the terminal's own background,
+   so they melted into the screen. A slightly lighter panel sets them apart. */
+Toast,
+Toast:ansi {
+    background: $panel-lighten-1;
+}
+
+/* Search row: ★ (liked by me) and the filters button sit right of the query. */
+#favorites,
+#filters {
+    margin-left: 1;
+}
+
+/* Fixed width, room for 'filters · 99': the count appearing must not push the
+   'my likes' toggle (and whatever is under the cursor) sideways. */
+#filters {
+    width: 14;
+}
+
+#filter-summary {
+    height: 1;
+    padding: 0 0 0 13;
+}
+
+#filters-dialog .inline-caption {
+    width: auto;
+    padding: 0 1;
+    color: $text-muted;
+}
+
+#filters-dialog .date {
+    width: 14;
+}
+
+#filters-dialog SuggestionMenu {
+    margin-left: 14;
+}
+
+/* Download list: newest at the bottom, following it like a terminal. */
+#downloads {
+    width: 100%;
+    height: 1fr;
+    min-height: 5;
+}
+
+/* Right padding = the rows' padding plus their 1-column scrollbar, so the
+   header columns line up with the data. */
+.list-header {
+    height: 1;
+    color: $text-muted;
+    padding: 0 2 0 1;
+}
+
+#rows {
+    height: 1fr;
+    padding: 0 1;
+    background: ansi_default;
+    scrollbar-size-vertical: 1;
+    scrollbar-background: ansi_default;
+    scrollbar-color: $panel-lighten-2;
+    scrollbar-color-hover: $text-muted;
+}
+
+.download-row {
+    height: auto;
+}
+
+.download-row:hover {
+    background: $foreground 5%;
+}
+
+.row-line {
+    height: 1;
+}
+
+.download-row.-faint .row-line {
+    color: $text-muted;
+}
+
+.cell {
+    height: 1;
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
+}
+
+.cell.mark { width: 2; }
+/* Post ids are always 11 characters: the file column is fixed, and the spare
+   width goes to the status, which holds the long texts and the bar. */
+.cell.name { width: 13; }
+.cell.type { width: 6; }
+.cell.size { width: 12; }
+.cell.length { width: 8; }
+.cell.weight { width: 10; }
+.cell.status { width: 1fr; min-width: 20; }
+.cell.actions { width: 15; }
+
+.row-info {
+    width: 8;
+}
+
+.row-open {
+    width: 7;
+}
+
+.row-details {
+    height: auto;
+    padding: 0 0 1 2;
+    color: $text;
+}
+
+#dropped-note {
+    height: 1;
+    padding: 0 2;
+}
+
+/* The follow button floats over the bottom edge of the list, centred, and
+   takes no room of its own: overlay keeps it out of the layout, the offset
+   lifts it from just below the list onto its last line. */
+/* As wide as the button only, so it covers just its own cells (a full-width
+   row blanked the whole list line behind it). Overlays ignore the parent's
+   alignment, so the list centres it from code with an offset. */
+#follow-bar {
+    overlay: screen;
+    width: auto;
+    height: 1;
+}
+
+/* A pill of its own, so it reads as a floating button and not as a list row. */
+#follow {
+    padding: 0 2;
+    background: $panel-lighten-2;
+    color: $accent;
+}
+

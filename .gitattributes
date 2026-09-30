@@ -1,0 +1,2 @@
+# start.bat is also a POSIX shell script; CRLF line endings would break it under sh.
+start.bat text eol=lf
