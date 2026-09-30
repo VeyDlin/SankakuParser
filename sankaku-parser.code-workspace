@@ -1,0 +1,51 @@
+{
+    "folders": [
+        {
+            "name": "Sankaku Parser",
+            "path": "."
+        }
+    ],
+    "settings": {
+        "files.exclude": {
+            "**/__pycache__": true,
+            "**/.mypy_cache": true,
+            "**/.venv": true,
+            ".github": true,
+            "data": true
+        },
+        "explorer.fileNesting.enabled": true,
+        "explorer.fileNesting.expand": false,
+        "explorer.fileNesting.patterns": {
+            "main.py": "requirements.txt, requirements-dev.txt, pyrightconfig.json, config.user.json, config.tokens.json, start.bat, README.md, LICENSE, .gitignore, *.code-workspace"
+        },
+        "editor.detectIndentation": false,
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4,
+        // Type-checking config lives in pyrightconfig.json so the editor and the
+        // CLI agree; only the interpreter is pointed at here.
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe"
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-python.python",
+            "ms-python.vscode-pylance",
+            "ms-python.debugpy"
+        ]
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                // externalTerminal is required: prompt_toolkit needs a real
+                // console, which the Debug Console does not provide.
+                "name": "Python: main",
+                "type": "debugpy",
+                "request": "launch",
+                "program": "${workspaceFolder}/main.py",
+                "cwd": "${workspaceFolder}",
+                "console": "externalTerminal",
+                "justMyCode": false
+            }
+        ]
+    }
+}
